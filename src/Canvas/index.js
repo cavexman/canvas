@@ -27,12 +27,10 @@ export const Canvas = () => {
     }
 
     const onChange = (shape) => { // TODO insert in zorder
-        console.log("shape", shape)
         const trimDisplayList = displayList.filter((s) => s.id != shape.id);
         setDisplaylist([...trimDisplayList, shape])
     }
 
-    console.log(selection)
     return (
         <div>
             <div className={cls.buttonBar}>

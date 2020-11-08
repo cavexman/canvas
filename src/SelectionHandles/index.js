@@ -8,9 +8,10 @@ export const SelectionHandles = ({
     width,
     height,
     setSize,
-}) => { // render prop
-    const [ref, deltaW, deltaH, isDragging] = useResizing(() => setSize({width: width + deltaW, height: height + deltaH}));
-    console.log("top", {deltaW, deltaH})
+}) => {
+    const [ref, isDragging] = useResizing(({w, h}) => {
+        setSize({width: width + w, height: height + h})
+    });
     return (
         <div className={cls.handles} ref={ref}>
             <div className={cls.topLeftHandle} />

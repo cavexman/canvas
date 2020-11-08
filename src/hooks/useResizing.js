@@ -1,15 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
+var startPos = {x: 0, y: 0}; // TODO...useState doesn't update between mousedown and mousemove
 
 export const useResizing = (onResize = () => {})  => {
     const [isDragging, setIsDragging] = useState(false);
-    const [startPos, setStartPos] = useState({ x: 50, y: 50 });
     const ref = useRef(null);
 
     function onMouseMove(e) {
         if (!isDragging) return;
         onResize({
-            deltaW: e.x - startPos.x, // TODO adjust x,y for container margins and offsets because mouse pointer is in global coords
-            deltaH: e.y - startPos.y, // TODO handle drag from other than lower right
+            w: e.x - startPos.x,
+            h: e.y - startPos.y,
         });
         e.stopPropagation();
         e.preventDefault();
@@ -24,10 +24,10 @@ export const useResizing = (onResize = () => {})  => {
     function onMouseDown(e) {
         if (e.button !== 0) return;
         setIsDragging(true);
-        setStartPos({
-            x: e.x, // TODO adjust x,y for container margins and offsets because mouse pointer is in global coords
-            y: e.y, // TODO handle drag from other than lower right
-        });
+        startPos = {
+            x: e.x,
+            y: e.y,
+        };
 
         e.stopPropagation();
         e.preventDefault();
@@ -59,5 +59,5 @@ export const useResizing = (onResize = () => {})  => {
         };
     }, [isDragging]);
 
-    return [ref, startPos.x, startPos.y, isDragging];
+    return [ref, isDragging];
 }
