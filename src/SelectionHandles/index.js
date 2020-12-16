@@ -2,18 +2,9 @@ import React  from 'react';
 
 import cls from './SelectionHandles.module.sass';
 
-import {useResizing} from "../hooks/useResizing";
-
-export const SelectionHandles = ({
-    width,
-    height,
-    setSize,
-}) => {
-    const [ref, isDragging] = useResizing(({w, h}) => {
-        setSize({width: width + w, height: height + h})
-    });
+export const SelectionHandles = () => {
     return (
-        <div className={cls.handles} ref={ref}>
+        <div className={cls.handles}>
             <div className={cls.topLeftHandle} />
             <div className={cls.topRightHandle} />
             <div className={cls.bottomLeftHandle} />

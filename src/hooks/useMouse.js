@@ -1,37 +1,46 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
-export const useDragging = (ref,
-                            onDragStart = () => true,
-                            onDrag = () => {},
-                            onDragEnd = () => {})  => {
-    const [isDragging, setIsDragging] = useState(false);
+let startPos = {x: 0, y: 0}; // TODO...useState doesn't update between mousedown and mousemove...maybe instead a this.startPos? or useRef?
+
+// pass in a ref to connect to the div that wants to listen
+// pass in callbacks for various mouse tracking
+export const useMouse = (ref,
+    onDragStart = () => true,
+)  => {
+    const [dragTarget, setDragTarget] = useState(false);
 
     function onMouseMove(e) {
-        if (!isDragging) return;
-        onDrag({
-            x: e.x - isDragging.width / 2, // TODO adjust x,y for container margins and offsets globalToLocal
-            y: e.y - isDragging.height / 2,
-            target: isDragging,
-        });
+        if (!dragTarget) return;
+        dragTarget.onDrag({
+            startX: startPos.x,
+            startY: startPos.y,
+            x: e.pageX,
+            y: e.pageY,
+            target: dragTarget,
+        }, e);
         e.stopPropagation();
         e.preventDefault();
     }
 
     function onMouseUp(e) {
-        setIsDragging(false);
         e.stopPropagation();
         e.preventDefault();
-        onDragEnd(e);
+        dragTarget.onDragEnd(e);
+        setDragTarget(null);
     }
 
     function onMouseDown(e) {
         if (e.button !== 0) return;
-        const target = onDragStart({x: e.x, y: e.y,});
+        startPos = {
+            x: e.pageX, // use pageX so we are relative to top of page; works when scrolled
+            y: e.pageY,
+        };
+        const target = onDragStart({x: e.pageX, y: e.pageY,}, e);
         if (target) { // ask host if ok to start drag
-            setIsDragging(target);
+            setDragTarget(target);
         }
-        // e.stopPropagation();
-        // e.preventDefault();
+        e.stopPropagation();
+        e.preventDefault();
     }
 
     // When the element mounts, attach an mousedown listener
@@ -44,10 +53,10 @@ export const useDragging = (ref,
         };
     }, []);
 
-    // Everytime the isDragging state changes, assign or remove
+    // Everytime the dragTarget state changes, assign or remove
     // the corresponding mousemove and mouseup handlers
     useEffect(() => {
-        if (isDragging) {
+        if (dragTarget) {
             document.addEventListener("mouseup", onMouseUp);
             document.addEventListener("mousemove", onMouseMove);
         } else {
@@ -58,7 +67,7 @@ export const useDragging = (ref,
             document.removeEventListener("mouseup", onMouseUp);
             document.removeEventListener("mousemove", onMouseMove);
         };
-    }, [isDragging]);
+    }, [dragTarget]);
 
-    return [isDragging];
+    return dragTarget;
 }

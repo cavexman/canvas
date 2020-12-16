@@ -1,93 +1,66 @@
-import React, {useState} from 'react';
+import React, {useEffect} from 'react';
+import FluxStore from "../state/FluxStore";
+import {useForceUpdate} from "../hooks/useForceUpdate";
 
 import CircleSVG from "../CircleSVG";
 import PolygonSVG from "../PolygonSVG";
 
+import Toolbar from "../Toolbar";
+import SelectionController from "../SelectionController";
+
 import cls from './Canvas.module.sass';
 
-export const Canvas = () => {
-    const [nextId, setId] = useState(1);
-    const [displayList, setDisplaylist] = useState([]);
-    const [selection, setSelection] = useState([]);
+/*
+* lets do hit testing at canvas
+* get the click
+* find the object hit
+* focus hit obj
+* track drag, modify focused obj
+* */
 
-    const onNewObject = (type) => {
-        setDisplaylist([...displayList, {
-            id: nextId,
-            type: type,
-            width: 50,
-            height: 50,
-            radius: 24,
-            strokeWidth: 2,
-            strokeColor: 'none',
-            fillColor: 'grey',
-            text: 'Lorem ipsum dolor sit amet, consectetur adipiscing',
-            zOrder: displayList.length, // do I need this? zorder is just order of the list
-        }]);
-        setId(nextId + 1);
-    }
-
-    const onChange = (shape) => { // TODO insert in zorder
-        const trimDisplayList = displayList.filter((s) => s.id != shape.id);
-        setDisplaylist([...trimDisplayList, shape])
-    }
-
+const Canvas = (props) => {
+    const forceUpdate = useForceUpdate();
+    useEffect(() => { // when the store gets longer/shorter we have to re-render the array, if shape props change then just that instance needs to re-render
+        FluxStore.addChangeListener('STORE_NEW_OBJECT', forceUpdate);
+        FluxStore.addChangeListener('STORE_DELETE_OBJECT', forceUpdate);
+    }, []);
+    const shapes = FluxStore.shapes(); // TODO use connect to get shapes via props
+console.log("render canvas");
     return (
-        <div>
-            <div className={cls.buttonBar}>
-                <button
-                    onClick={() => onNewObject('circle')}
-                >
-                    New Circle
-                </button>
-                <button
-                    onClick={() => onNewObject('polygon')}
-                >
-                    New Polygon
-                </button>
-            </div>
-            {
-                displayList.map((shape) => { // TODO use a factory
-                    switch (shape.type) {
-                        case 'circle':
-                            return (
-                                <CircleSVG
-                                    key={shape.id}
-                                    id={shape.id}
-                                    width={shape.width}
-                                    height={shape.height}
-                                    radius={shape.radius}
-                                    strokeWidth={shape.strokeWidth}
-                                    strokeColor={shape.strokeColor}
-                                    fillColor={shape.fillColor}
-                                    text={shape.text}
-                                    setSelection={setSelection}
-                                    selected={selection.includes(shape.id)}
-                                    setSize={({width, height}) => onChange({...shape, width, height })}
-                                />
-                            );
-                            break;
-                        case 'polygon':
-                            return (
-                                <PolygonSVG
-                                    key={shape.id}
-                                    id={shape.id}
-                                    width={shape.width}
-                                    height={shape.height}
-                                    radius={shape.radius}
-                                    strokeWidth={shape.strokeWidth}
-                                    strokeColor={shape.strokeColor}
-                                    fillColor={shape.fillColor}
-                                    setSelection={setSelection}
-                                    selected={selection.includes(shape.id)}
-                                />
-                            );
-                            break;
-                        default:
-                            return null;
+        <div className={cls.rootcanvas}>
+            <Toolbar />
+            <SelectionController>
+                {
+                    // loop thru shapes which are in shared storage
+                    shapes.map((shape, shapeIndex) => {
+                        switch (shape.type) { // TODO use a node factory
+                            case 'circle':
+                                return (
+                                    <CircleSVG
+                                        key={shape.id}
+                                        shapeIndex={shapeIndex}
+                                        shape={shape}
+                                    />
+                                );
+                            case 'polygon':
+                                return (
+                                    <PolygonSVG
+                                        key={shape.id}
+                                        id={shape.id}
+                                        width={shape.width}
+                                        height={shape.height}
+                                        radius={shape.radius}
+                                        strokeWidth={shape.strokeWidth}
+                                        strokeColor={shape.strokeColor}
+                                        fillColor={shape.fillColor}
+                                    />
+                                );
+                            default:
+                                return null;
+                        }
                     }
-                }
-            )}
-
+                )}
+            </SelectionController>
         </div>
     )
 }
